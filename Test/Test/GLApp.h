@@ -15,7 +15,7 @@ public:
 
 	//FRAMEWORK METHODS
 	virtual bool Init();
-	virtual void Update() = 0;
+	virtual void Update(float dt) = 0;
 	virtual void Render() = 0;
 	virtual LRESULT MsgProc(HWND hWnd, UINT msg, WPARAM wParar, LPARAM lParam);
 protected:
@@ -26,6 +26,7 @@ protected:
 	UINT m_ClientWidth;
 	UINT m_ClientHeight;
 	DWORD m_WindowStyle;
+	float m_FPS;
 	char* m_AppTitle;
 protected:
 	//INITIALIZE WINDOW
@@ -34,13 +35,11 @@ protected:
 	//INITIALIZE OPENGL
 	bool InitGL();
 
+	//CALCULATE FRAMES PER SECOND
+	void CalculateFPS(float dt);
+
 	//SHUTDOWN OPENGL
 	void Shutdown();
-private:
-	double updateRate;
-	double updateInterval;
-
-	unsigned long idleTime;
 };
 
 #endif

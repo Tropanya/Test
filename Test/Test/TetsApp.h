@@ -12,7 +12,7 @@ public:
 
 	//OVERRIDES
 	bool Init() override;
-	void Update() override;
+	void Update(float dt) override;
 	void Render() override;
 	LRESULT MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) override;
 };

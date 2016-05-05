@@ -25,10 +25,6 @@ GLApp::GLApp()
 
 GLApp::GLApp(HINSTANCE hInstance)
 {
-	updateRate = 60.0f;
-	updateInterval = SECOND / updateRate;
-	idleTime = 1;
-
 	m_hAppInstance = hInstance;
 	m_hAppWnd = NULL;
 	m_hDevContext = NULL;
@@ -37,6 +33,7 @@ GLApp::GLApp(HINSTANCE hInstance)
 	m_ClientHeight = WINDOW_HEIGHT;
 	m_AppTitle = "OPENGL APPLICATION";
 	m_WindowStyle = WS_OVERLAPPED | WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
+	m_FPS = 0.0f;
 	g_pApp = this;
 }
 
@@ -49,16 +46,13 @@ int GLApp::Run()
 {
 
 	//CALCULATE TIMING
-	__int64 lastTime = 0;
-	lastTime = GetTickCount();
+	__int64 prevTime = 0;
+	QueryPerformanceCounter((LARGE_INTEGER*)&prevTime);
 
-	int fps = 0;
-	int upd = 0;
-	int updl = 0;
-
-	int count = 0;
-
-	double delta = 0.0;
+	__int64 countsPerSecond = 0;
+	QueryPerformanceFrequency((LARGE_INTEGER*)&countsPerSecond);
+	
+	float secondsPerCount = 1.0f / countsPerSecond;
 
 	//MIAN MESSAGE LOOP
 	MSG msg = {0};
@@ -73,65 +67,24 @@ int GLApp::Run()
 		else
 		{
 			//CALCULATE DELTA TIME
-			__int64 nowTime = GetTickCount();
-			__int64 elapsedTime = nowTime - lastTime;
+			__int64 curTime = 0;
+			QueryPerformanceCounter((LARGE_INTEGER*)&curTime);
 
-			count += (int)elapsedTime;
+			float deltaTime = (curTime - prevTime) * secondsPerCount;
+			//UPDATE
+			Update(deltaTime);
 
-			bool render = false;
+			//RENDER
+			Render();
 
-			delta += (elapsedTime / updateInterval);
-
-			while(delta > 1.0f)
-			{
-				//UPDATE
-				Update();
-
-				upd++;
-				delta--;
-
-				if(render)
-				{
-					updl++;
-				}
-				else
-				{
-					render = true;
-				}
-			}
-
-			if(render)
-			{
-				//RENDER
-				Render();
-
-				fps++;
-			}
-			else
-			{
-				Sleep(idleTime);
-			}
-			
-			while(count >= SECOND)
-			{
-				//OUTPUT TO WINDOW TITLE
-				std::stringstream ss;
-
-				ss << m_AppTitle << " FPS: " << fps << " UPD: " << upd << " UPDL: " << updl << "  " <<
-					glGetString(GL_VENDOR) << " " << glGetString(GL_RENDERER) << " " << glGetString(GL_VERSION);
-				SetWindowText(m_hAppWnd,ss.str().c_str());
-
-				fps = 0;
-				upd = 0;
-				updl = 0;
-				count = 0;
-			}
+			//CALCULATE FPS
+			CalculateFPS(deltaTime);
 
 			//SWAP THE BUFFERS
 			SwapBuffers(m_hDevContext);
 
 			//RESET PREV TIME FOR NEXT FRAME
-			lastTime = nowTime;
+			prevTime = curTime;
 		}
 	}
 
@@ -238,6 +191,30 @@ LRESULT GLApp::MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	default:
 		return DefWindowProc(hWnd,msg,wParam,lParam);
+	}
+}
+
+void GLApp::CalculateFPS(float dt)
+{
+	static float elapsed = 0;
+	static float frameCount = 0;
+
+	elapsed += dt;
+	frameCount++;
+
+	while(elapsed >= 1.0f)
+	{
+		m_FPS = frameCount;
+
+		//OUTPUT TO WINDOW TITLE
+		std::stringstream ss;
+
+		ss << m_AppTitle <<" FPS: " << m_FPS << " " <<
+			glGetString(GL_VENDOR) << " " << glGetString(GL_RENDERER) << " " << glGetString(GL_VERSION);
+		SetWindowText(m_hAppWnd,ss.str().c_str());
+
+		elapsed = 0.0f;
+		frameCount = 0;
 	}
 }
 

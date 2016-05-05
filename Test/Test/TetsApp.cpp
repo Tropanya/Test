@@ -17,7 +17,7 @@ bool TestApp::Init()
 	return true;
 }
 
-void TestApp::Update()
+void TestApp::Update(float dt)
 {
 	//Updater::MainGameUpdate();
 }
